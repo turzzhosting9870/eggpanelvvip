@@ -1,44 +1,61 @@
 #!/bin/bash
 
-GREEN='\033[0;32m'
-CYAN='\033[0;36m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
+clear
+echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo -e "     🔰 Selamat Datang di Panel Turzz Hosting 🔰"
+echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo ""
 
-OS=$(uname -o)
-DISTRO=$(lsb_release -d 2>/dev/null | cut -f2)
-KERNEL=$(uname -r)
-CPU_MODEL=$(grep -m 1 'model name' /proc/cpuinfo | cut -d ':' -f2 | xargs)
-CPU_CORES=$(nproc)
-RAM_TOTAL=$(free -m | awk '/Mem:/ {print $2}')
-RAM_USED=$(free -m | awk '/Mem:/ {print $3}')
-RAM_FREE=$(free -m | awk '/Mem:/ {print $4}')
-DISK_TOTAL=$(df -h / | awk 'NR==2 {print $2}')
-DISK_USED=$(df -h / | awk 'NR==2 {print $3}')
-DISK_FREE=$(df -h / | awk 'NR==2 {print $4}')
-IP_ADDRESS=$(hostname -I | awk '{print $1}')
-UPTIME=$(uptime -p)
-NODE_VER=$(node -v)
-PYTHON_VER=$(python3 --version | awk '{print $2}')
+# Info VPS
+echo -e "\033[1;33m📊 Informasi Sistem:\033[0m"
+echo -e "🖥️  Hostname: \033[1;32m$(hostname)\033[0m"
+echo -e "🌐 IP Lokal : \033[1;32m$(hostname -I | awk '{print $1}')\033[0m"
+echo -e "🕒 Uptime   : \033[1;32m$(uptime -p)\033[0m"
+echo -e "💿 OS       : \033[1;32m$(lsb_release -ds 2>/dev/null || cat /etc/os-release | grep PRETTY_NAME | cut -d= -f2 | tr -d '\"')\033[0m"
+echo -e "⚙️ Kernel   : \033[1;32m$(uname -r)\033[0m"
+echo -e "🧠 RAM Total: \033[1;32m$(free -h | awk '/^Mem:/ {print $2}')\033[0m"
+echo -e "📦 Disk     : \033[1;32m$(df -h / | awk 'NR==2 {print $2 " total, " $4 " free"}')\033[0m"
+echo ""
 
-echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo -e "${CYAN}📦 TERIMA KASIH TELAH MENGGUNAKAN IMAGE PTERODACTYL CUSTOM"
-echo -e "${YELLOW}--------------------------------------------------------------"
-echo -e "${CYAN}📌 Tools Terinstal:"
-echo -e "   • Node.js     : ${NODE_VER}"
-echo -e "   • Python3     : ${PYTHON_VER} (auto support)"
-echo -e "   • FFmpeg, Git, Curl, Chromium, dll"
-echo -e ""
-echo -e "${CYAN}🖥️ VPS Info:"
-echo -e "   • OS          : ${DISTRO:-Unknown} ($OS)"
-echo -e "   • Kernel      : ${KERNEL}"
-echo -e "   • CPU         : ${CPU_MODEL} (${CPU_CORES} cores)"
-echo -e "   • RAM         : ${RAM_TOTAL}MB total / ${RAM_USED}MB used / ${RAM_FREE}MB free"
-echo -e "   • Disk        : ${DISK_TOTAL} total / ${DISK_USED} used / ${DISK_FREE} free"
-echo -e "   • IP Address  : ${IP_ADDRESS}"
-echo -e "   • Uptime      : ${UPTIME}"
-echo -e "${YELLOW}--------------------------------------------------------------"
-echo -e "${GREEN}🚀 Menjalankan bot kamu sekarang...\n${NC}"
+# Info Tools
+echo -e "\033[1;34m📘 Versi Bahasa & Tools:\033[0m"
+echo -e "🔹 Node.js  : \033[1;36m$(node -v 2>/dev/null || echo 'Tidak terpasang')\033[0m"
+echo -e "🔹 NPM      : \033[1;36m$(npm -v 2>/dev/null || echo 'Tidak terpasang')\033[0m"
+echo -e "🔹 Python   : \033[1;36m$(python3 --version 2>/dev/null || echo 'Tidak terpasang')\033[0m"
+echo -e "🔹 PIP      : \033[1;36m$(pip3 --version 2>/dev/null | awk '{print $2}' || echo 'Tidak terpasang')\033[0m"
+echo -e "🔹 PM2      : \033[1;36m$(pm2 -v 2>/dev/null || echo 'Tidak terpasang')\033[0m"
+echo ""
 
-# Jalankan index.js (Node.js bot)
-exec node index.js
+echo -e "\033[1;32m✔️ Semua tool terinstall dengan baik dan siap digunakan\033[0m"
+echo -e "\033[1;36m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\033[0m"
+echo ""
+
+# --- Start Project ---
+if [[ -f package.json ]]; then
+    if [[ ! -d node_modules ]]; then
+        echo -e "\033[1;34m📦 Menjalankan 'npm install' karena node_modules belum ada...\033[0m"
+        npm install
+    else
+        echo -e "\033[1;32m📦 Dependensi sudah terinstall\033[0m"
+    fi
+
+    if grep -q '"start"' package.json; then
+        echo -e "\033[1;35m🚀 Menjalankan 'npm start' melalui PM2...\033[0m"
+        pm2 start npm --name turzzbot -- start
+        pm2 logs
+    else
+        echo -e "\033[1;31m❌ Tidak ditemukan perintah 'start' di package.json\033[0m"
+        bash
+    fi
+
+# --- Python (.py auto detect) ---
+elif ls *.py &>/dev/null; then
+    mainpy=$(ls *.py | head -n 1)
+    echo -e "\033[1;35m🐍 Menjalankan file Python: $mainpy melalui PM2...\033[0m"
+    pm2 start "python3 $mainpy" --name turzzpy
+    pm2 logs
+
+else
+    echo -e "\033[1;31m❌ Tidak ditemukan file yang bisa dijalankan (tidak ada package.json atau .py)\033[0m"
+    bash
+fi
